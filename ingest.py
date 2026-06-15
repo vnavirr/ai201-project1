@@ -23,13 +23,11 @@ import os
 import re
 import time
 import hashlib
-import random
 from dataclasses import dataclass, asdict
 from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 # ---------------------------------------------------------------------------
 # Config
@@ -37,7 +35,7 @@ from playwright.sync_api import sync_playwright
 
 CHUNK_SIZE = 450        # target characters per chunk
 CHUNK_OVERLAP = 60      # overlap between adjacent chunks
-MIN_CHUNK_LEN = 150     # discard chunks shorter than this (noise/fragments)
+MIN_CHUNK_LEN = 80      # discard chunks shorter than this (noise/fragments)
 REQUEST_DELAY = 2.0     # seconds between HTTP requests (be polite)
 
 RAW_DIR = "data/raw"
@@ -45,10 +43,13 @@ CLEANED_DIR = "data/cleaned"
 CHUNKS_FILE = "data/chunks.jsonl"
 
 HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    )
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+}
+
+# Reddit blocks generic User-Agents; use a descriptive bot string + Accept header
+REDDIT_HEADERS = {
+    "User-Agent": "python:uci-prof-rag:v1.0 (educational project)",
+    "Accept": "application/json",
 }
 
 # ---------------------------------------------------------------------------
@@ -56,14 +57,6 @@ HEADERS = {
 # ---------------------------------------------------------------------------
 
 SOURCES = [
-    # --- Sample review data (for testing when real sources fail) ---
-    {
-        "slug": "sample_reviews",
-        "url": "file://data/sample_reviews.json",
-        "source_type": "sample",
-        "display_name": "Sample Student Reviews",
-        "professor_hint": None,
-    },
     # --- Reddit threads (use JSON API; no scraping needed) ---
     {
         "slug": "reddit_best_cs_profs",
@@ -94,9 +87,29 @@ SOURCES = [
         "display_name": "UCI ICS Faculty Listing",
         "professor_hint": None,
     },
-    # --- RMP pages: blocked by Cloudflare when headless; included for reference.
-    #     If you have a Playwright/Selenium setup, swap fetch_html() below.
-    #     For now these are skipped with a clear warning. ---
+    # --- RMP individual professor pages (JS-rendered, fetched via Playwright) ---
+    {
+        "slug": "rmp_nadia_ahmed",
+        "url": "https://www.ratemyprofessors.com/professor/2987203",
+        "source_type": "rmp",
+        "display_name": "RMP: Nadia Ahmed (UCI CS)",
+        "professor_hint": "Ahmed",
+    },
+    {
+        "slug": "rmp_alex_thornton",
+        "url": "https://www.ratemyprofessors.com/professor/13200",
+        "source_type": "rmp",
+        "display_name": "RMP: Alex Thornton (UCI CS)",
+        "professor_hint": "Thornton",
+    },
+    {
+        "slug": "rmp_ray_klefstad",
+        "url": "https://www.ratemyprofessors.com/professor/17490",
+        "source_type": "rmp",
+        "display_name": "RMP: Ray Klefstad (UCI CS)",
+        "professor_hint": "Klefstad",
+    },
+    # --- RMP department search page (JS-rendered) ---
     {
         "slug": "rmp_uci_cs",
         "url": "https://www.ratemyprofessors.com/search/professors/1074?q=*&did=11",
@@ -136,36 +149,6 @@ class Chunk:
 # Fetching
 # ---------------------------------------------------------------------------
 
-def fetch_raw_playwright(url: str, slug: str) -> Optional[str]:
-    """Fetch URL using Playwright (handles JS rendering). Saves to data/raw/<slug>.html."""
-    os.makedirs(RAW_DIR, exist_ok=True)
-    raw_path = os.path.join(RAW_DIR, f"{slug}.html")
-
-    if os.path.exists(raw_path):
-        print(f"  [cache] {slug}")
-        with open(raw_path, encoding="utf-8") as f:
-            return f.read()
-
-    print(f"  [fetch-playwright] {url}")
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch()
-            page = browser.new_page(user_agent=HEADERS["User-Agent"])
-            page.goto(url, wait_until="networkidle", timeout=30000)
-            time.sleep(2)  # Extra time for JS to settle
-            html = page.content()
-            browser.close()
-    except Exception as e:
-        print(f"  [ERROR] Could not fetch {url}: {e}")
-        return None
-
-    with open(raw_path, "w", encoding="utf-8") as f:
-        f.write(html)
-
-    time.sleep(REQUEST_DELAY)
-    return html
-
-
 def fetch_raw(url: str, slug: str) -> Optional[str]:
     """Fetch URL and return raw text. Saves to data/raw/<slug>. Returns None on failure."""
     os.makedirs(RAW_DIR, exist_ok=True)
@@ -177,23 +160,10 @@ def fetch_raw(url: str, slug: str) -> Optional[str]:
         with open(raw_path, encoding="utf-8") as f:
             return f.read()
 
-    # Handle local file:// URLs
-    if url.startswith("file://"):
-        local_path = url.replace("file://", "")
-        print(f"  [load] {local_path}")
-        try:
-            with open(local_path, "r", encoding="utf-8") as f:
-                raw = f.read()
-            with open(raw_path, "w", encoding="utf-8") as f:
-                f.write(raw)
-            return raw
-        except Exception as e:
-            print(f"  [ERROR] Could not read {local_path}: {e}")
-            return None
-
     print(f"  [fetch] {url}")
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=15, verify=False)
+        _h = REDDIT_HEADERS if url.endswith(".json") else HEADERS
+        resp = requests.get(url, headers=_h, timeout=15)
         resp.raise_for_status()
         raw = resp.text
     except requests.RequestException as e:
@@ -218,12 +188,6 @@ BOILERPLATE_FRAGMENTS = [
     "JavaScript is disabled", "Enable JavaScript",
     "Advertisement", "Sponsored", "Skip to content",
     "Back to top", "Load more", "Show more comments",
-    "Accept cookies", "We use cookies", "Cookie settings",
-    "Search by", "Department", "Filter", "Sort by",
-    "More info", "Learn more", "Click here", "Get started",
-    "Follow us", "Connect with", "Social media", "Share on",
-    "Copyright", "Contact us", "About us", "Help",
-    "Mobile app", "Download", "Available on", "Get it on",
 ]
 
 def strip_boilerplate_lines(text: str) -> str:
@@ -354,97 +318,14 @@ def clean_generic_html(raw: str) -> str:
     return text
 
 
-def clean_rmp_html(raw: str) -> str:
-    """Clean RMP professor pages: extract actual review content."""
-    soup = BeautifulSoup(raw, "html.parser")
-
-    # Remove nav, footer, ads, sidebars
-    for tag in soup.find_all(["nav", "footer", "script", "style", "header", "aside"]):
-        tag.decompose()
-    for tag in soup.find_all(class_=re.compile(
-        r"(navbar|sidebar|ad|cookie|banner|modal|search-bar|filter)",
-        re.I
-    )):
-        tag.decompose()
-
-    # Try to extract review containers
-    main = soup.find("main") or soup.find("div", class_=re.compile("content|results", re.I)) or soup.find("body")
-    if main:
-        # Remove very common RMP boilerplate
-        for tag in main.find_all(string=re.compile(r"(Sign in|Rate|Professors|Search|Department|Filter|Sort)", re.I)):
-            tag.extract()
-
-    text = main.get_text(separator="\n") if main else ""
-    text = strip_boilerplate_lines(text)
-    text = normalize_whitespace(text)
-
-    # Remove lines that are just numbers, stars, or single words
-    lines = [l for l in text.split("\n") if len(l.split()) >= 3]
-    text = "\n".join(lines)
-
-    return text
-
-
-def clean_uloop_html(raw: str) -> str:
-    """Clean Uloop professor pages: extract review/rating content."""
-    soup = BeautifulSoup(raw, "html.parser")
-
-    # Remove nav, footer, ads, sidebars
-    for tag in soup.find_all(["nav", "footer", "script", "style", "header", "aside", "form"]):
-        tag.decompose()
-    for tag in soup.find_all(class_=re.compile(
-        r"(navbar|sidebar|ad|cookie|banner|modal|filter|search)",
-        re.I
-    )):
-        tag.decompose()
-
-    # Extract main content area
-    main = soup.find("main") or soup.find("div", class_=re.compile("content|results|professor", re.I)) or soup.find("body")
-    if main:
-        text = main.get_text(separator="\n")
-    else:
-        text = soup.get_text(separator="\n")
-
-    text = strip_boilerplate_lines(text)
-    text = normalize_whitespace(text)
-
-    # Remove lines that are just numbers, single words, or navigation
-    lines = [l for l in text.split("\n") if len(l.split()) >= 3]
-    text = "\n".join(lines)
-
-    return text
-
-
-def clean_sample_reviews(raw: str) -> str:
-    """Load sample reviews from JSON and format as text."""
-    try:
-        data = json.loads(raw)
-        reviews = data.get("sample_reviews", [])
-        lines = []
-        for rev in reviews:
-            prof = rev.get("professor", "Unknown")
-            course = rev.get("course", "Unknown")
-            source = rev.get("source", "Sample")
-            text = rev.get("review", "")
-            lines.append(f"[{prof} - {course} - {source}]\n{text}\n")
-        return "\n".join(lines)
-    except json.JSONDecodeError:
-        return ""
-
-
 def clean_document(raw: str, source_type: str, professor_hint: Optional[str]) -> str:
     """Dispatch to the correct cleaner based on source type."""
-    if source_type == "sample":
-        return clean_sample_reviews(raw)
-    elif source_type == "reddit":
+    if source_type == "reddit":
         return clean_reddit_json(raw, professor_hint)
     elif source_type == "ics_faculty":
         return clean_ics_faculty(raw)
-    elif source_type == "rmp":
-        return clean_rmp_html(raw)
-    elif source_type == "uloop":
-        return clean_uloop_html(raw)
     else:
+        # rmp and uloop are JS-rendered; if raw HTML somehow arrived, clean it generically
         return clean_generic_html(raw)
 
 # ---------------------------------------------------------------------------
@@ -458,10 +339,10 @@ COURSE_PATTERN = re.compile(
 
 # A rough list of known UCI CS professor last names for name extraction
 KNOWN_PROFS = [
-    "Thornton", "Klefstad", "Shindler", "Pattis", "Dillencourt",
+    "Ahmed", "Thornton", "Klefstad", "Shindler", "Pattis", "Dillencourt",
     "Frost", "Goodrich", "Irani", "Lathrop", "Lueker",
     "Petzold", "Eppstein", "Kay", "André", "Epstein",
-    "Varanasi", "Dutt", "Gupta", "Sherwood", "Varanasi",
+    "Varanasi", "Dutt", "Gupta", "Sherwood",
 ]
 PROF_PATTERN = re.compile(
     r"\b(" + "|".join(re.escape(p) for p in KNOWN_PROFS) + r")\b",
@@ -501,7 +382,6 @@ def chunk_text(
     Each chunk inherits metadata from the source dict.
     Short fragments below MIN_CHUNK_LEN are discarded.
     Near-duplicate chunks (identical first 80 chars) are deduplicated.
-    Chunks without meaningful content (no prof/course mention) may be skipped.
     """
     if not text.strip():
         return []
@@ -516,6 +396,7 @@ def chunk_text(
 
         # Try to break at a sentence boundary within the last 80 chars of the window
         if end < len(text):
+            # Look for '. ', '! ', '? ', or '\n' near the end of the window
             boundary = max(
                 text.rfind(". ", start, end),
                 text.rfind("! ", start, end),
@@ -523,11 +404,12 @@ def chunk_text(
                 text.rfind("\n", start, end),
             )
             if boundary > start + chunk_size // 2:
-                end = boundary + 1
+                end = boundary + 1  # include the punctuation
 
         chunk_text_str = text[start:end].strip()
 
         if len(chunk_text_str) >= MIN_CHUNK_LEN:
+            # Stable dedup hash
             chunk_hash = hashlib.md5(chunk_text_str.encode()).hexdigest()[:12]
             dedup_key = chunk_text_str[:80]
 
@@ -535,17 +417,6 @@ def chunk_text(
                 seen_hashes.add(dedup_key)
                 professor = extract_professor(chunk_text_str, source.get("professor_hint"))
                 course = extract_course(chunk_text_str)
-
-                # For RMP/Uloop, require at least professor or course mention
-                if source["source_type"] in ("rmp", "uloop"):
-                    if not professor and not course:
-                        # Try harder: check if chunk mentions teaching/difficulty/ratings
-                        if not re.search(r"(teach|difficult|hard|easy|rating|review|skill|good|bad|recommend)", chunk_text_str, re.I):
-                            # Skip this chunk—it's likely boilerplate
-                            start = end - overlap
-                            if start >= len(text):
-                                break
-                            continue
 
                 chunks.append(Chunk(
                     text=chunk_text_str,
@@ -559,6 +430,7 @@ def chunk_text(
                 ))
                 index += 1
 
+        # Advance with overlap
         start = end - overlap
         if start >= len(text):
             break
@@ -574,6 +446,7 @@ def main():
     os.makedirs(CLEANED_DIR, exist_ok=True)
 
     all_chunks: list[Chunk] = []
+    skipped_js = []
 
     for source in SOURCES:
         slug = source["slug"]
@@ -581,36 +454,36 @@ def main():
         print(f"\n{'='*60}")
         print(f"Processing: {source['display_name']}")
 
-        try:
-            # 1. Fetch raw (use Playwright for JS-rendered sources)
-            if stype in JS_ONLY_TYPES:
-                raw = fetch_raw_playwright(source["url"], slug)
-            else:
-                raw = fetch_raw(source["url"], slug)
-
-            if raw is None:
-                print(f"  [SKIP] Could not retrieve {slug}")
-                continue
-
-            # 2. Clean
-            cleaned = clean_document(raw, stype, source.get("professor_hint"))
-            if not cleaned.strip():
-                print(f"  [WARN] Cleaning produced empty output for {slug}")
-                continue
-
-            cleaned_path = os.path.join(CLEANED_DIR, f"{slug}.txt")
-            with open(cleaned_path, "w", encoding="utf-8") as f:
-                f.write(cleaned)
-            print(f"  [clean] {len(cleaned):,} chars saved to {cleaned_path}")
-
-            # 3. Chunk
-            chunks = chunk_text(cleaned, source)
-            all_chunks.extend(chunks)
-            print(f"  [chunk] {len(chunks)} chunks produced")
-
-        except Exception as e:
-            print(f"  [ERROR] Exception processing {slug}: {e}")
+        # Skip JS-rendered sources gracefully
+        if stype in JS_ONLY_TYPES:
+            print(f"  [SKIP] {stype.upper()} pages require a JS renderer (Playwright/Selenium).")
+            print(f"         To include this source, render the page and save HTML to:")
+            print(f"         {RAW_DIR}/{slug}.html")
+            print(f"         Then re-run this script — it will pick up the cached file.")
+            skipped_js.append(source["display_name"])
             continue
+
+        # 1. Fetch raw
+        raw = fetch_raw(source["url"], slug)
+        if raw is None:
+            print(f"  [SKIP] Could not retrieve {slug}")
+            continue
+
+        # 2. Clean
+        cleaned = clean_document(raw, stype, source.get("professor_hint"))
+        if not cleaned.strip():
+            print(f"  [WARN] Cleaning produced empty output for {slug}")
+            continue
+
+        cleaned_path = os.path.join(CLEANED_DIR, f"{slug}.txt")
+        with open(cleaned_path, "w", encoding="utf-8") as f:
+            f.write(cleaned)
+        print(f"  [clean] {len(cleaned):,} chars → {cleaned_path}")
+
+        # 3. Chunk
+        chunks = chunk_text(cleaned, source)
+        all_chunks.extend(chunks)
+        print(f"  [chunk] {len(chunks)} chunks produced")
 
     # 4. Save chunks
     with open(CHUNKS_FILE, "w", encoding="utf-8") as f:
@@ -618,19 +491,16 @@ def main():
             f.write(json.dumps(asdict(chunk), ensure_ascii=False) + "\n")
 
     print(f"\n{'='*60}")
-    print(f"DONE: {len(all_chunks)} total chunks saved to {CHUNKS_FILE}")
+    print(f"DONE: {len(all_chunks)} total chunks → {CHUNKS_FILE}")
 
-    # Sample and print 5 random chunks for testing
-    if all_chunks:
-        sample_size = min(5, len(all_chunks))
-        random_chunks = random.sample(all_chunks, sample_size)
-        print(f"\n{'='*60}")
-        print(f"SAMPLE: {sample_size} random chunks")
-        print(f"{'='*60}")
-        for i, chunk in enumerate(random_chunks, 1):
-            print(f"\n[{i}] {chunk.source_name} | Prof: {chunk.professor} | Course: {chunk.course}")
-            print(f"    Chunk ID: {chunk.chunk_id}")
-            print(f"    Text: {chunk.text[:200]}...")
+    if skipped_js:
+        print(f"\nSkipped (JS-rendered, need Playwright):")
+        for name in skipped_js:
+            print(f"  • {name}")
+        print("\nTo scrape these, install Playwright:")
+        print("  pip install playwright && playwright install chromium")
+        print("  Then use: browser.new_page(); page.goto(url); page.content()")
+        print("  Save the rendered HTML to data/raw/<slug>.html and re-run.")
 
 
 if __name__ == "__main__":

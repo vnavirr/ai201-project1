@@ -1,10 +1,5 @@
 """
 app.py — UCI CS Professor RAG: Web Interface
-
-Gradio-based interface for querying professor reviews.
-- Left: question input
-- Right: answer + sources
-- Enforces grounding through system prompt
 """
 
 import gradio as gr
@@ -12,33 +7,28 @@ from generate import ask
 
 
 def handle_query(question: str) -> tuple[str, str]:
-    """
-    Handle a user query and return answer + sources.
-
-    Args:
-        question: User's question
-
-    Returns:
-        (answer_text, sources_markdown)
-    """
     if not question.strip():
         return "Please enter a question.", ""
 
     result = ask(question.strip())
     answer = result["answer"]
-    sources_markdown = "\n".join(
-        f"• [{name}]({url})" for name, url in result["sources"]
-    ) if result["sources"] else "(No sources retrieved)"
 
-    return answer, sources_markdown
+    if result["sources"]:
+        items = "".join(
+            f'<li><a href="{url}" target="_blank" rel="noopener noreferrer">{name}</a></li>'
+            for name, url in result["sources"]
+        )
+        sources_html = f"<ul>{items}</ul>"
+    else:
+        sources_html = "<p><em>No sources retrieved.</em></p>"
+
+    return answer, sources_html
 
 
 def build_ui():
-    """Build the Gradio UI."""
     with gr.Blocks(title="UCI CS Professor Reviews RAG") as demo:
         gr.Markdown("""
         # UCI CS Professor Reviews Search
-
         Ask questions about UCI Computer Science professors based on real student reviews.
 
         **Examples:**
@@ -63,9 +53,8 @@ def build_ui():
                     interactive=False,
                 )
                 gr.Markdown("#### Sources")
-                sources_box = gr.Markdown()
+                sources_box = gr.HTML()          # ← HTML renders <a> tags correctly
 
-        # Wire up click and submit
         search_btn.click(
             handle_query,
             inputs=question,

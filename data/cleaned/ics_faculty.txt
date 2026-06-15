@@ -66,6 +66,7 @@ Associate Professor of Teaching and Director of MCS
 Computer Science
 sergio.gago@uci.edu
 View Tony Givargis
+Professor and Department Chair
 Computer Science
 givargis@uci.edu
 View Michael Goodrich
