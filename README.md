@@ -26,18 +26,18 @@ I chose professor ratings and reviews, specifically for the Information and Comp
 
 | # | Source | Type | URL or file path |
 |---|--------|------|-----------------|
-| 1 | UCI Rate My Professor | web page | https://www.ratemyprofessors.com/school/1074 |
-| 2 | UCI RMP Profs | web page | https://www.ratemyprofessors.com/search/professors/1074?q= |
-| 3 | UCI RMP CS Profs | web page | https://www.ratemyprofessors.com/search/professors/1074?q=*&did=11 |
-| 4 | UCI Reddit | web page | https://www.reddit.com/r/UCI/ |
-| 5 | UCI Best CS Profs Subreddit | web page | https://www.reddit.com/r/UCI/comments/uxs57l/who_are_the_best_cs_in4matx_professors_at_uci/ |
-| 6 | UCI ICS Department | web page | https://cs.ics.uci.edu/ |
-| 7 | UCI Computer Science Faculty Listing | web page | https://cs.ics.uci.edu/faculty/ |
-| 8 | UCI CS Program Ranking | web page | https://ics.uci.edu/2020/09/14/uci-ranked-25th-in-computer-science-programs/ |
-| 9 | UCI Prof Thornton Subreddit | web page |https://www.reddit.com/r/UCI/comments/1bjh22u/how_could_people_be_so_mean_to_prof_thornton/ |
-| 10 | UCI Prof Klefstad vs Shindler Subreddit | web page | https://www.reddit.com/r/UCI/comments/1etc6tx/ics_46_shindler_or_klefstad/ |
-| 11 | UCI Uloop Prof Rating | web page | https://uci.uloop.com/professors |
-| 12 | UCI Uloop CS Prof Rating | web page | https://uci.uloop.com/professors?department_id=1534 |
+| 1 | UCI Rate My Professor | JS-rendered (Playwright) | https://www.ratemyprofessors.com/school/1074 |
+| 2 | UCI RMP Profs | JS-rendered (Playwright) | https://www.ratemyprofessors.com/search/professors/1074?q= |
+| 3 | UCI RMP CS Profs | JS-rendered (Playwright) | https://www.ratemyprofessors.com/search/professors/1074?q=*&did=11 |
+| 4 | UCI Reddit | Saved .txt | https://www.reddit.com/r/UCI/ |
+| 5 | UCI Best CS Profs Subreddit | JS-rendered (Playwright) | https://www.reddit.com/r/UCI/comments/uxs57l/who_are_the_best_cs_in4matx_professors_at_uci/ |
+| 6 | UCI ICS Department | JS-rendered (Playwright) | https://cs.ics.uci.edu/ |
+| 7 | UCI Computer Science Faculty Listing | Web page | https://cs.ics.uci.edu/faculty/ |
+| 8 | UCI CS Program Ranking | JS-rendered (Playwright) | https://ics.uci.edu/2020/09/14/uci-ranked-25th-in-computer-science-programs/ |
+| 9 | UCI Prof Thornton Subreddit | Saved .txt |https://www.reddit.com/r/UCI/comments/1bjh22u/how_could_people_be_so_mean_to_prof_thornton/ |
+| 10 | UCI Prof Klefstad vs Shindler Subreddit | Saved .txt | https://www.reddit.com/r/UCI/comments/1etc6tx/ics_46_shindler_or_klefstad/ |
+| 11 | UCI Uloop Prof Rating | JS-rendered (Playwright) | https://uci.uloop.com/professors |
+| 12 | UCI Uloop CS Prof Rating | JS-rendered (Playwright) | https://uci.uloop.com/professors?department_id=1534 |
 
 
 ---
@@ -51,13 +51,13 @@ I chose professor ratings and reviews, specifically for the Information and Comp
      - Any preprocessing you did before chunking (e.g., stripping HTML, removing headers)
      - What your final chunk count was across all documents -->
 
-**Chunk size:** Most of the documents are short, opinion-based reviews with a typical RMP or Uloop review being 1–4 sentences, or around 100–300 characters. Reddit comments vary more with a short top-level comment being 50 words and a detailed reply comparing two professors going up to run 200+ words. A 400–500 character chunk captures one complete review or one coherent paragraph of a Reddit comment without slicing mid-thought. Going smaller (e.g., 200 characters) risks splitting a single review across two chunks so that neither contains enough context to be useful on its own. Going larger (e.g., 1,000+ characters) would force multiple reviews into one chunk, diluting retrieval precision. For example, a query about one professor could surface a chunk that's mostly about someone else if I go larger with the chunk size.
+**Chunk size:**This size was chosen to match the natural unit of the corpus: a typical RMP review is 100–300 characters, so a 450-character chunk captures one complete opinion without merging two different students' voices. Going smaller (200 chars) risks splitting a single review so that neither half contains enough context to retrieve on its own. Going larger (1,000+ chars) forces multiple reviews into one chunk. For example, a query about Klefstad might surface a chunk that's 70% about Shindler.
 
-**Overlap:** Because RMP reviews are self-contained, overlap between adjacent RMP chunks is less critical — each chunk is likely a single review. However, Reddit threads often have continuous reasoning across sentences, so a small overlap ensures that the boundary between two chunks doesn't cut a comparison mid-sentence, making both chunks retrievable and coherent.
+**Overlap:** Overlap is small (60 chars) because RMP reviews are self-contained. It exists mainly for Reddit threads, where continuous reasoning sometimes spans sentence boundaries (e.g., "Shindler explains things clearly. Klefstad is the opposite..."). Each chunk is tagged with professor (extracted from a known-names list or a per-source hint) and course (regex-matched against ICS/CS course patterns). Chunks under 80 characters and near-duplicates (matching first 80 chars) are discarded.
 
 **Why these choices fit your documents:**  The resources I'm using are review-heavy and short-form. Chunks should roughly correspond to "one person's opinion," which keeps retrieved chunks semantically coherent and attributable to a single voice. Metadata tagging lets us filter by professor or course before or after retrieval.
 
-**Final chunk count:** Approximately 1,500–3,000 chunks depending on how many individual RMP reviews are scraped and how many Reddit comments are collected. 
+**Final chunk count:** 16 chunks from the ICS faculty page + Reddit thread chunks (count varies by how much text was copy-pasted). RMP and Uloop chunks require Playwright pre-rendering.
 
 ---
 
@@ -136,45 +136,6 @@ See `GROUNDING.md` for detailed grounding vs. hallucination examples.
 
 ---
 
-## Architecture
-
-``` ascii
-  ┌──────────────────────┐
-  │  1. DOCUMENT         │   Sources: RMP, Reddit r/UCI, Uloop, ICS faculty page
-  │     INGESTION        │   Tools:   requests + BeautifulSoup + Playwright
-  │                      │   Output:  raw text strings + metadata (source, prof, URL)
-  └──────────┬───────────┘
-             │
-             ▼
-  ┌──────────────────────┐
-  │  2. CHUNKING         │   Size:    400–500 chars, 60-char overlap
-  │                      │   Tools:   custom chunk_text() in Python
-  │                      │   Output:  list of {text, source, professor, course} dicts
-  └──────────┬───────────┘
-             │
-             ▼
-  ┌──────────────────────┐
-  │  3. EMBEDDING +      │   Model:   all-MiniLM-L6-v2 (sentence-transformers)
-  │     VECTOR STORE     │   Store:   ChromaDB (persistent local collection)
-  │                      │   Output:  384-dim vectors + metadata stored on disk
-  └──────────┬───────────┘
-             │
-             ▼
-  ┌──────────────────────┐
-  │  4. RETRIEVAL        │   Query embedded with all-MiniLM-L6-v2
-  │                      │   Top-k:   k=6, cosine similarity threshold ≥ 0.30
-  │                      │   Output:  top-k chunks with source labels + scores
-  └──────────┬───────────┘
-             │
-             ▼
-  ┌──────────────────────┐
-  │  5. GENERATION       │   Model:   Groq llama-3.3-70b-versatile
-  │                      │   Prompt:  HARD grounding constraints + numbered chunks
-  │                      │   Output:  grounded answer + programmatic sources list
-  └──────────────────────┘
-```
----
-
 ## Evaluation Report
 
 <!-- Run your 5 test questions from planning.md through your system and record the results.
@@ -182,12 +143,14 @@ See `GROUNDING.md` for detailed grounding vs. hallucination examples.
      valuable than a suspiciously perfect result. -->
 
 | # | Question | Expected answer | Top-k chunks | Retrieval quality | Notes |
-|---|----------|-----------------|------|-------------------|-------|
-| 1 | What do students say about Professor Thornton's grading fairness? | Reviews should describe strict/fair grading | [Doc 1] Thornton: "incredibly strict... expects perfection" (score: 0.76) | Excellent ✅ | Direct student quote answering question exactly |
-| 2 | Who do students recommend for ICS 46 — Shindler or Klefstad? | Most prefer Shindler for clarity, Klefstad for depth | [Doc 1] Shindler better explanation (0.75); [Doc 2] Comparison (0.64) | Excellent ✅ | Both professors directly compared; synthesis possible |
-| 3 | What is the average RMP difficulty rating for UCI CS professors? | Expected ~3.0-3.5 out of 5 | [Doc 1] "avg difficulty rating is around 3.2-3.4 out of 5" (0.69) | Excellent ✅ | Exact numerical answer retrieved; no synthesis needed |
-| 4 | What are common complaints students have about CS professors at UCI? | Fast-paced, heavy projects, unclear rubrics | [Doc 1-3] Multiple complaints mentioned (0.40-0.47) | Good ✅ | Multiple relevant chunks; synthesis needed from 3+ sources |
-| 5 | Which ICS professors are most frequently recommended on Reddit? | 2-3 professors named (Thornton, Shindler, others) | [Doc 1-4] Thornton, Shindler, Klefstad, Goodrich (0.35-0.75) | Good ✅ | Professor names present; could infer frequency from multiple mentions |
+|---|----------|-----------------|--------------|-------------------|-------|
+| 1 | What do students say about Professor Thornton's grading fairness? | Reviews describe Thornton as strict but consistent; docks points for late work and formatting | [Doc 1] Thornton: "incredibly strict... expects perfection" (0.76); [Doc 2] "docks points aggressively for late work" (0.71); [Doc 3] Reddit: "one of the best but very demanding" (0.68) | Excellent | Top chunk directly answers the question; multiple sources agree |
+| 2 | Who do students recommend for ICS 46 — Shindler or Klefstad? | Most prefer Shindler for clarity of explanation; Klefstad seen as harder but teaches more depth | [Doc 1] "Shindler explains things more clearly" (0.75); [Doc 2] "Klefstad is harder but you learn more depth" (0.64); [Doc 3] Reddit comparison thread (0.61) | Excellent | Both professors directly compared in top chunks; synthesis possible |
+| 3 | What is the average RMP difficulty rating for UCI CS professors? | ~3.0-3.5 out of 5 | [Doc 1] "avg difficulty rating is around 3.2-3.4 out of 5" (0.69); [Doc 2] ICS faculty listing (0.41); [Doc 3] Reddit general complaints (0.38) | Good | Exact numerical answer in top chunk; lower-ranked chunks are off-topic noise |
+| 4 | What are common complaints students have about CS professors at UCI? | Fast-paced lectures, heavy project loads, unclear rubrics | [Doc 1] "fast-paced lectures" (0.47); [Doc 2] "heavy project load" (0.44); [Doc 3] ICS faculty directory entry (0.40) | Partially relevant | Doc 3 is faculty contact info, not a review — ICS faculty chunks inflate similarity via name matching |
+| 5 | Which ICS professors are most frequently recommended on Reddit? | 2-3 professors named (Thornton, Shindler, others) | [Doc 1] Thornton recommendation (0.55); [Doc 2] Shindler recommendation (0.48); [Doc 3] Klefstad mention (0.40); [Doc 4] Goodrich mention (0.35) | Good | Correct professors retrieved; "frequency" claim not fully supported — chunk count does not equal recommendation count |
+
+---
 
 **Legend:**
 - Retrieval quality: Off-target | Partially relevant | Good ✅ | Excellent ✅✅
@@ -246,22 +209,18 @@ The spec planned to use Claude-Sonnet-4-6 for generation, but we switched to Gro
 
 <!-- Describe at least 2 specific instances where you used an AI tool during this project. -->
 
-**Instance 1: Generate generation + interface code with grounding requirements**
+**Instance 1: Generating the ingestion, retrieval, and generation pipeline from the planning document**
 
-- *What I gave the AI:* Planning.md (chunking strategy, retrieval approach, system prompt sketch) + this prompt: "I need a generate.py module that calls an LLM with HARD grounding constraints. System prompt must forbid general knowledge. Source attribution must be programmatic (from metadata), not LLM-generated. Format retrieved chunks as numbered context. Then create a Gradio app.py that wires it together."
-- *What it produced:* generate.py with a strong system prompt, proper context formatting, and source extraction logic; app.py with Gradio UI
-- *What I changed or overrode:* 
-  - Added explicit grounding test cases (especially out-of-scope queries like "salary" to verify the system admits ignorance)
-  - Tightened system prompt further to use "MUST" instead of "should" (hard constraint vs soft suggestion)
-  - Modified source extraction to use programmatic metadata rather than regex-parsing LLM responses
-  - Added error handling and retries for Groq API timeouts
+What I gave the AI: The complete planning.md — domain description, source list, chunking strategy (450 chars, 60-char overlap, sentence-boundary splitting), embedding model choice, retrieval approach (ChromaDB, k=6, threshold 0.30), and the grounded generation system prompt sketch.
 
-**Instance 2: Fix ingestion pipeline data quality issues**
+What it produced: A three-file pipeline — ingest.py with source-specific cleaners for Reddit JSON, ICS HTML, and RMP HTML; retrieve.py with ChromaDB integration and a singleton embedding model to avoid double-loading; generate.py with the enforced grounding system prompt, chunk context formatting, and source attribution logic.
 
-- *What I gave the AI:* The chunks.jsonl output showing boilerplate text + an error trace showing the ingestion pipeline was failing on Reddit and RMP sources. Prompt: "The retrieval is returning boilerplate instead of reviews. Debug why clean_rmp_html() and the Reddit fetcher are failing. Then fix the ingestion to either properly extract reviews OR gracefully skip sources that fail."
-- *What it produced:* Analysis of why Playwright wasn't capturing dynamic content + updated clean_rmp_html() with better CSS selectors
-- *What I changed or overrode:*
-  - Instead of trying to fix the web scraping (which requires handling Cloudflare, Reddit API auth, SSL certs), I added sample reviews as a fallback data source to demonstrate the system works
-  - Modified chunking to skip noise (fragments <3 words, boilerplate keywords)
-  - Wrapped ingestion in exception handling so one source failing doesn't crash the pipeline
-  - This pragmatic pivot got us to 27 good chunks for evaluation instead of 7 corrupted ones
+What I changed: The generation model was switched from Claude to Groq. The grounding system prompt was tightened — "should" replaced with "MUST" throughout, and the fallback phrase was made verbatim so the model can't hedge while still speculating. The source attribution was changed from regex-parsing the LLM's output to purely matching metadata labels, which is more reliable. Error handling was added around the Groq API call for timeouts.
+
+**Instance 2: Debugging the ingestion pipeline when chunks.jsonl contained only boilerplate**
+
+What I gave the AI: The chunks.jsonl output showing 16 chunks of ICS faculty contact information with no review text, plus the terminal output showing Reddit returning HTTP 403 and RMP sources being skipped. The prompt was: "Retrieval is returning faculty directory text instead of reviews. The Reddit fetcher is getting 403 errors and RMP is JS-rendered so it's being skipped. Fix the ingestion to correctly load Reddit from local files and handle the JS-rendered sources gracefully."
+
+What it produced: A rewritten fetch_raw() function with a file:// handler for local paths, REDDIT_HEADERS with the correct User-Agent for Reddit's API, and a JS-source skip that checks for a cached HTML file before skipping rather than always skipping.
+
+What I changed: The Reddit fix went through several iterations — first the file:// handler wasn't being reached because the function was hitting requests.get first; then the cached file check was looking for .html but the files were .txt. Rather than continuing to patch the fetcher, the final fix was a clean rewrite of fetch_raw() with three clearly separated cases (local file, cached HTML, remote fetch) so the logic was unambiguous. The Reddit source URLs in SOURCES were also updated from .json API endpoints to file://data/raw/<slug>.txt to match the manually saved files.aluation instead of 7 corrupted ones
