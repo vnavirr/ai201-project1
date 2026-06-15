@@ -21,18 +21,18 @@ I chose professor ratings and reviews, specifically for the Information and Comp
 
 | # | Source | Type | URL or file path |
 |---|--------|------|-----------------|
-| 1 | UCI Rate My Professor | web page | https://www.ratemyprofessors.com/school/1074 |
-| 2 | UCI RMP Profs | web page | https://www.ratemyprofessors.com/search/professors/1074?q= |
-| 3 | UCI RMP CS Profs | web page | https://www.ratemyprofessors.com/search/professors/1074?q=*&did=11 |
-| 4 | UCI Reddit | web page | https://www.reddit.com/r/UCI/ |
-| 5 | UCI Best CS Profs Subreddit | web page | https://www.reddit.com/r/UCI/comments/uxs57l/who_are_the_best_cs_in4matx_professors_at_uci/ |
-| 6 | UCI ICS Department | web page | https://cs.ics.uci.edu/ |
-| 7 | UCI Computer Science Faculty Listing | web page | https://cs.ics.uci.edu/faculty/ |
-| 8 | UCI CS Program Ranking | web page | https://ics.uci.edu/2020/09/14/uci-ranked-25th-in-computer-science-programs/ |
-| 9 | UCI Prof Thornton Subreddit | web page |https://www.reddit.com/r/UCI/comments/1bjh22u/how_could_people_be_so_mean_to_prof_thornton/ |
-| 10 | UCI Prof Klefstad vs Shindler Subreddit | web page | https://www.reddit.com/r/UCI/comments/1etc6tx/ics_46_shindler_or_klefstad/ |
-| 11 | UCI Uloop Prof Rating | web page | https://uci.uloop.com/professors |
-| 12 | UCI Uloop CS Prof Rating | web page | https://uci.uloop.com/professors?department_id=1534 |
+| 1 | UCI Rate My Professor | JS-rendered (Playwright) | https://www.ratemyprofessors.com/school/1074 |
+| 2 | UCI RMP Profs | JS-rendered (Playwright) | https://www.ratemyprofessors.com/search/professors/1074?q= |
+| 3 | UCI RMP CS Profs | JS-rendered (Playwright) | https://www.ratemyprofessors.com/search/professors/1074?q=*&did=11 |
+| 4 | UCI Reddit | Saved .txt | https://www.reddit.com/r/UCI/ |
+| 5 | UCI Best CS Profs Subreddit | JS-rendered (Playwright) | https://www.reddit.com/r/UCI/comments/uxs57l/who_are_the_best_cs_in4matx_professors_at_uci/ |
+| 6 | UCI ICS Department | JS-rendered (Playwright) | https://cs.ics.uci.edu/ |
+| 7 | UCI Computer Science Faculty Listing | Web page | https://cs.ics.uci.edu/faculty/ |
+| 8 | UCI CS Program Ranking | JS-rendered (Playwright) | https://ics.uci.edu/2020/09/14/uci-ranked-25th-in-computer-science-programs/ |
+| 9 | UCI Prof Thornton Subreddit | Saved .txt |https://www.reddit.com/r/UCI/comments/1bjh22u/how_could_people_be_so_mean_to_prof_thornton/ |
+| 10 | UCI Prof Klefstad vs Shindler Subreddit | Saved .txt | https://www.reddit.com/r/UCI/comments/1etc6tx/ics_46_shindler_or_klefstad/ |
+| 11 | UCI Uloop Prof Rating | JS-rendered (Playwright) | https://uci.uloop.com/professors |
+| 12 | UCI Uloop CS Prof Rating | JS-rendered (Playwright) | https://uci.uloop.com/professors?department_id=1534 |
 
 ---
 
