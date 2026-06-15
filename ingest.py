@@ -57,24 +57,24 @@ REDDIT_HEADERS = {
 # ---------------------------------------------------------------------------
 
 SOURCES = [
-    # --- Reddit threads (use JSON API; no scraping needed) ---
+    # --- Reddit threads (manually saved HTML — Reddit 403s on automated requests) ---
     {
         "slug": "reddit_best_cs_profs",
-        "url": "https://www.reddit.com/r/UCI/comments/uxs57l/who_are_the_best_cs_in4matx_professors_at_uci/.json",
+        "url": "file://data/raw/reddit_best_cs_profs.txt",
         "source_type": "reddit",
         "display_name": "Reddit: Best CS/INF4MATX Profs",
         "professor_hint": None,
     },
     {
         "slug": "reddit_thornton",
-        "url": "https://www.reddit.com/r/UCI/comments/1bjh22u/how_could_people_be_so_mean_to_prof_thornton/.json",
+        "url": "file://data/raw/reddit_thornton.txt",
         "source_type": "reddit",
         "display_name": "Reddit: Prof Thornton Thread",
         "professor_hint": "Thornton",
     },
     {
         "slug": "reddit_klefstad_vs_shindler",
-        "url": "https://www.reddit.com/r/UCI/comments/1etc6tx/ics_46_shindler_or_klefstad/.json",
+        "url": "file://data/raw/reddit_klefstad_vs_shindler.txt",
         "source_type": "reddit",
         "display_name": "Reddit: ICS 46 Klefstad vs Shindler",
         "professor_hint": None,
@@ -318,10 +318,48 @@ def clean_generic_html(raw: str) -> str:
     return text
 
 
+
+def clean_reddit_html(raw: str) -> str:
+    """
+    Clean a manually saved Reddit thread HTML page.
+    Keeps: post title, post body, comment text.
+    Removes: nav, sidebars, buttons, vote counts, share links, ads.
+    """
+    soup = BeautifulSoup(raw, "html.parser")
+
+    for tag in soup.find_all(["nav", "footer", "script", "style", "aside", "header", "iframe", "noscript"]):
+        tag.decompose()
+
+    # Reddit-specific noise: remove action bars, vote buttons, share/report links
+    for tag in soup.find_all(class_=re.compile(
+        r"(actionbar|awardings|promote|share|report|vote|ads|sidebar|community-info"
+        r"|header|nav|subreddit-info|join|subscribe|search|login|signup|cookie"
+        r"|flair|tag|award|trophy|banner|icon|community-details)",
+        re.I
+    )):
+        tag.decompose()
+
+    # Also remove by data-testid attributes Reddit uses
+    for tag in soup.find_all(attrs={"data-testid": re.compile(
+        r"(post-vote|comment-vote|share-button|report|award|join|subscribe)", re.I
+    )}):
+        tag.decompose()
+
+    # Extract text — Reddit saved HTML keeps comment bodies in <p> and <div> tags
+    body = soup.find("body") or soup
+    text = body.get_text(separator="\n")
+    text = strip_boilerplate_lines(text)
+    text = remove_markdown_links(text)
+    text = normalize_whitespace(text)
+
+    # Drop lines that are clearly UI chrome: just numbers, single words, or icons
+    lines = [l for l in text.split("\n") if len(l.split()) >= 4]
+    return "\n".join(lines)
+
 def clean_document(raw: str, source_type: str, professor_hint: Optional[str]) -> str:
     """Dispatch to the correct cleaner based on source type."""
     if source_type == "reddit":
-        return clean_reddit_json(raw, professor_hint)
+        return clean_reddit_html(raw)
     elif source_type == "ics_faculty":
         return clean_ics_faculty(raw)
     else:
