@@ -106,6 +106,44 @@ This serves two purposes: it lets the user verify the answer against the origina
 
 ---
 
+## Architecture
+
+  ┌──────────────────────┐
+  │  1. DOCUMENT         │   Sources: RMP, Reddit r/UCI, Uloop, ICS faculty page
+  │     INGESTION        │   Tools:   requests + BeautifulSoup
+  │                      │   Output:  raw text strings + metadata (source, prof, URL)
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │  2. CHUNKING         │   Size:    400–500 chars, 50–75 char overlap
+  │                      │   Tools:   custom chunk_text() in Python
+  │                      │   Output:  list of {text, source, professor, course} dicts
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │  3. EMBEDDING +      │   Model:   all-MiniLM-L6-v2 (sentence-transformers)
+  │     VECTOR STORE     │   Store:   ChromaDB (persistent local collection)
+  │                      │   Output:  384-dim vectors + metadata stored on disk
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │  4. RETRIEVAL        │   Query embedded with all-MiniLM-L6-v2
+  │                      │   Top-k:   k=6, cosine similarity threshold ≥ 0.30
+  │                      │   Output:  top-k chunks with source labels + scores
+  └──────────┬───────────┘
+             │
+             ▼
+  ┌──────────────────────┐
+  │  5. GENERATION       │   Model:   claude-sonnet-4-6 (Anthropic API)
+  │                      │   Prompt:  system grounding instruction + labeled chunks
+  │                      │   Output:  answer with inline citations + Sources block
+  └──────────────────────┘
+
+---
+
 ## Evaluation Report
 
 <!-- Run your 5 test questions from planning.md through your system and record the results.
@@ -114,11 +152,11 @@ This serves two purposes: it lets the user verify the answer against the origina
 
 | # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
 |---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 |  | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
+| 1 | What do students say about Professor Thornton's grading fairness? | Reviews should describe Thornton as harsh or strict in grading; some students find him unfair, others say he's consistent; Reddit thread r/UCI/1bjh22u should surface. | | | |
+| 2 | Who do students recommend for ICS 46 — Shindler or Klefstad? | Retrieved chunks should reflect the Reddit comparison thread; most students prefer Shindler for clarity of explanation but note Klefstad is more lenient in grading. | | | |
+| 3 | What is the average RMP difficulty rating for UCI CS professors? | System should retrieve structured RMP data and synthesize a ballpark range; expected answer is roughly 3.0–3.5 out of 5. | | | |
+| 4 | What are common complaints students have about CS professors at UCI? | Top retrieved chunks should surface recurring themes: fast-paced lectures, heavy project loads, unclear rubrics — drawn from multiple RMP and Reddit sources. | | | |
+| 5 | Which ICS professors are most frequently recommended on Reddit? | Expected answer names 2–3 professors (e.g., Thornton for some courses, Shindler, others from the "best CS profs" thread) and links the sentiment to specific subreddit sources. | | | |
 
 **Retrieval quality:** Relevant / Partially relevant / Off-target  
 **Response accuracy:** Accurate / Partially accurate / Inaccurate
