@@ -92,7 +92,16 @@ This model maps sentences and short paragraphs to a 384-dimensional dense vector
 
 **System prompt grounding instruction:**
 
+You are a helpful assistant that answers questions about UCI ICS/CS professors using only the student reviews and forum posts provided below. Do not use any knowledge from your training data about these professors. If the provided context does not contain enough information to answer the question, say: "I don't have enough student feedback in my sources to answer that confidently." Do not speculate or fill gaps with general knowledge. When you answer, cite which source each claim comes from (e.g., "According to a Rate My Professors review..." or "A Reddit commenter in r/UCI noted..."). If multiple sources agree, say so.
+
+Context: {retrieved_chunks}
+Question: {query}
+
 **How source attribution is surfaced in the response:**
+
+The system prompt requires the model to cite source type inline (RMP vs. Reddit vs. Uloop) as it makes claims. A post-processing step then appends a short Sources block at the end of every answer listing the chunk labels actually referenced, e.g.: Sources used: [RMP | Thornton], [Reddit r/UCI | Thornton], [Uloop | Thornton]
+
+This serves two purposes: it lets the user verify the answer against the original platforms, and it makes it easy to spot when the model cited a source that doesn't actually support what it said — a useful debugging signal during evaluation.
 
 ---
 
