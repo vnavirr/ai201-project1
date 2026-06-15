@@ -108,6 +108,7 @@ This serves two purposes: it lets the user verify the answer against the origina
 
 ## Architecture
 
+``` ascii
   ┌──────────────────────┐
   │  1. DOCUMENT         │   Sources: RMP, Reddit r/UCI, Uloop, ICS faculty page
   │     INGESTION        │   Tools:   requests + BeautifulSoup
@@ -141,7 +142,7 @@ This serves two purposes: it lets the user verify the answer against the origina
   │                      │   Prompt:  system grounding instruction + labeled chunks
   │                      │   Output:  answer with inline citations + Sources block
   └──────────────────────┘
-
+```
 ---
 
 ## Evaluation Report
