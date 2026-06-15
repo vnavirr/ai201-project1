@@ -14,6 +14,8 @@
      Example: "Student reviews of CS professors at [university] — useful because official
      course descriptions don't reflect teaching style, exam difficulty, or workload." -->
 
+I chose professor ratings and reviews, specifically for the Information and Computer Science (ICS) department at UCI. This knowledge is valuable because students making course registration decisions need to understand a professor's actual teaching style, exam difficulty, grading fairness, and personality, which doesn't appear in official course catalogs or faculty bios.
+
 ---
 
 ## Document Sources
@@ -24,16 +26,19 @@
 
 | # | Source | Type | URL or file path |
 |---|--------|------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
+| 1 | UCI Rate My Professor | web page | https://www.ratemyprofessors.com/school/1074 |
+| 2 | UCI RMP Profs | web page | https://www.ratemyprofessors.com/search/professors/1074?q= |
+| 3 | UCI RMP CS Profs | web page | https://www.ratemyprofessors.com/search/professors/1074?q=*&did=11 |
+| 4 | UCI Reddit | web page | https://www.reddit.com/r/UCI/ |
+| 5 | UCI Best CS Profs Subreddit | web page | https://www.reddit.com/r/UCI/comments/uxs57l/who_are_the_best_cs_in4matx_professors_at_uci/ |
+| 6 | UCI ICS Department | web page | https://cs.ics.uci.edu/ |
+| 7 | UCI Computer Science Faculty Listing | web page | https://cs.ics.uci.edu/faculty/ |
+| 8 | UCI CS Program Ranking | web page | https://ics.uci.edu/2020/09/14/uci-ranked-25th-in-computer-science-programs/ |
+| 9 | UCI Prof Thornton Subreddit | web page |https://www.reddit.com/r/UCI/comments/1bjh22u/how_could_people_be_so_mean_to_prof_thornton/ |
+| 10 | UCI Prof Klefstad vs Shindler Subreddit | web page | https://www.reddit.com/r/UCI/comments/1etc6tx/ics_46_shindler_or_klefstad/ |
+| 11 | UCI Uloop Prof Rating | web page | https://uci.uloop.com/professors |
+| 12 | UCI Uloop CS Prof Rating | web page | https://uci.uloop.com/professors?department_id=1534 |
+
 
 ---
 
@@ -46,13 +51,13 @@
      - Any preprocessing you did before chunking (e.g., stripping HTML, removing headers)
      - What your final chunk count was across all documents -->
 
-**Chunk size:**
+**Chunk size:** Most of the documents are short, opinion-based reviews with a typical RMP or Uloop review being 1–4 sentences, or around 100–300 characters. Reddit comments vary more with a short top-level comment being 50 words and a detailed reply comparing two professors going up to run 200+ words. A 400–500 character chunk captures one complete review or one coherent paragraph of a Reddit comment without slicing mid-thought. Going smaller (e.g., 200 characters) risks splitting a single review across two chunks so that neither contains enough context to be useful on its own. Going larger (e.g., 1,000+ characters) would force multiple reviews into one chunk, diluting retrieval precision. For example, a query about one professor could surface a chunk that's mostly about someone else if I go larger with the chunk size.
 
-**Overlap:**
+**Overlap:** Because RMP reviews are self-contained, overlap between adjacent RMP chunks is less critical — each chunk is likely a single review. However, Reddit threads often have continuous reasoning across sentences, so a small overlap ensures that the boundary between two chunks doesn't cut a comparison mid-sentence, making both chunks retrievable and coherent.
 
-**Why these choices fit your documents:**
+**Why these choices fit your documents:**  The resources I'm using are review-heavy and short-form. Chunks should roughly correspond to "one person's opinion," which keeps retrieved chunks semantically coherent and attributable to a single voice. Metadata tagging lets us filter by professor or course before or after retrieval.
 
-**Final chunk count:**
+**Final chunk count:** Approximately 1,500–3,000 chunks depending on how many individual RMP reviews are scraped and how many Reddit comments are collected. 
 
 ---
 
@@ -64,9 +69,15 @@
      Consider: context length limits, multilingual support, accuracy on domain-specific text,
      latency, and local vs. API-hosted. -->
 
-**Model used:**
+**Model used:** all-MiniLM-L6-v2 via sentence-transformers
 
-**Production tradeoff reflection:**
+This model maps sentences and short paragraphs to a 384-dimensional dense vector space. It's fast, runs locally (no API cost), and performs well on short opinionated text which matches the review-heavy resources. Its 256-token context window is sufficient for 400–500 character chunks.
+
+**Production tradeoff reflection:** If deploying for real users without cost constraints, the main tradeoffs to consider would be:
+- text-embedding-3-large (OpenAI): Higher accuracy on domain-specific text, 3072-dimensional vectors, but API-hosted (latency + cost per query, data privacy concerns for student review data).
+- e5-large-v2 or bge-large-en: Stronger retrieval benchmarks than MiniLM, still local, but ~4× slower and require more RAM — acceptable for a production server, not ideal for a laptop demo.
+- Multilingual models (e.g., paraphrase-multilingual-MiniLM-L12-v2): Not needed here since all sources are English, but relevant if the system were extended to international student communities.
+- Context length: If chunks were larger (e.g., full Reddit threads), a model with a longer context window like nomic-embed-text (8192 tokens) would be necessary.
 
 ---
 
@@ -93,7 +104,7 @@
 
 | # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
 |---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 | | | | | |
+| 1 |  | | | | |
 | 2 | | | | | |
 | 3 | | | | | |
 | 4 | | | | | |
