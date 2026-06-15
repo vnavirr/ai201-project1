@@ -1,0 +1,19 @@
+UCI ICS Faculty
+Professor Richard Klefstad
+Dr. Klefstad teaches ICS 46: Data Structures and is known for his rigorous approach to teaching algorithms. He has extensive experience in systems programming and compiler design.
+Research interests: Operating systems, real-time systems, embedded systems.
+Email: klefstad@uci.edu
+Professor David Kay
+Research interests: Computer science education, software engineering practices.
+Email: kay@uci.edu
+Professor Michael Goodrich
+Dr. Goodrich is a prominent researcher in computational geometry and algorithms. He teaches advanced courses in data structures. His research has significant contributions to algorithm design and analysis.
+Research interests: Computational geometry, graph algorithms, security.
+Email: goodrich@uci.edu
+Professor Thornton
+Research interests: Education, curriculum design.
+Email: thornton@uci.edu
+Professor Pattis
+Professor Pattis is known for teaching ICS 21 with emphasis on software engineering principles. He has contributed significantly to computer science education at UCI.
+Research interests: Software engineering, education.
+Email: pattis@uci.edu
