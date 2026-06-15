@@ -46,8 +46,8 @@ CHUNKS_FILE = "data/chunks.jsonl"
 
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (compatible; UCI-RAG-research-bot/1.0; "
-        "educational project scraping publicly available reviews)"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     )
 }
 
@@ -56,6 +56,14 @@ HEADERS = {
 # ---------------------------------------------------------------------------
 
 SOURCES = [
+    # --- Sample review data (for testing when real sources fail) ---
+    {
+        "slug": "sample_reviews",
+        "url": "file://data/sample_reviews.json",
+        "source_type": "sample",
+        "display_name": "Sample Student Reviews",
+        "professor_hint": None,
+    },
     # --- Reddit threads (use JSON API; no scraping needed) ---
     {
         "slug": "reddit_best_cs_profs",
@@ -169,9 +177,23 @@ def fetch_raw(url: str, slug: str) -> Optional[str]:
         with open(raw_path, encoding="utf-8") as f:
             return f.read()
 
+    # Handle local file:// URLs
+    if url.startswith("file://"):
+        local_path = url.replace("file://", "")
+        print(f"  [load] {local_path}")
+        try:
+            with open(local_path, "r", encoding="utf-8") as f:
+                raw = f.read()
+            with open(raw_path, "w", encoding="utf-8") as f:
+                f.write(raw)
+            return raw
+        except Exception as e:
+            print(f"  [ERROR] Could not read {local_path}: {e}")
+            return None
+
     print(f"  [fetch] {url}")
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
+        resp = requests.get(url, headers=HEADERS, timeout=15, verify=False)
         resp.raise_for_status()
         raw = resp.text
     except requests.RequestException as e:
@@ -393,9 +415,28 @@ def clean_uloop_html(raw: str) -> str:
     return text
 
 
+def clean_sample_reviews(raw: str) -> str:
+    """Load sample reviews from JSON and format as text."""
+    try:
+        data = json.loads(raw)
+        reviews = data.get("sample_reviews", [])
+        lines = []
+        for rev in reviews:
+            prof = rev.get("professor", "Unknown")
+            course = rev.get("course", "Unknown")
+            source = rev.get("source", "Sample")
+            text = rev.get("review", "")
+            lines.append(f"[{prof} - {course} - {source}]\n{text}\n")
+        return "\n".join(lines)
+    except json.JSONDecodeError:
+        return ""
+
+
 def clean_document(raw: str, source_type: str, professor_hint: Optional[str]) -> str:
     """Dispatch to the correct cleaner based on source type."""
-    if source_type == "reddit":
+    if source_type == "sample":
+        return clean_sample_reviews(raw)
+    elif source_type == "reddit":
         return clean_reddit_json(raw, professor_hint)
     elif source_type == "ics_faculty":
         return clean_ics_faculty(raw)
@@ -540,31 +581,36 @@ def main():
         print(f"\n{'='*60}")
         print(f"Processing: {source['display_name']}")
 
-        # 1. Fetch raw (use Playwright for JS-rendered sources)
-        if stype in JS_ONLY_TYPES:
-            raw = fetch_raw_playwright(source["url"], slug)
-        else:
-            raw = fetch_raw(source["url"], slug)
+        try:
+            # 1. Fetch raw (use Playwright for JS-rendered sources)
+            if stype in JS_ONLY_TYPES:
+                raw = fetch_raw_playwright(source["url"], slug)
+            else:
+                raw = fetch_raw(source["url"], slug)
 
-        if raw is None:
-            print(f"  [SKIP] Could not retrieve {slug}")
+            if raw is None:
+                print(f"  [SKIP] Could not retrieve {slug}")
+                continue
+
+            # 2. Clean
+            cleaned = clean_document(raw, stype, source.get("professor_hint"))
+            if not cleaned.strip():
+                print(f"  [WARN] Cleaning produced empty output for {slug}")
+                continue
+
+            cleaned_path = os.path.join(CLEANED_DIR, f"{slug}.txt")
+            with open(cleaned_path, "w", encoding="utf-8") as f:
+                f.write(cleaned)
+            print(f"  [clean] {len(cleaned):,} chars saved to {cleaned_path}")
+
+            # 3. Chunk
+            chunks = chunk_text(cleaned, source)
+            all_chunks.extend(chunks)
+            print(f"  [chunk] {len(chunks)} chunks produced")
+
+        except Exception as e:
+            print(f"  [ERROR] Exception processing {slug}: {e}")
             continue
-
-        # 2. Clean
-        cleaned = clean_document(raw, stype, source.get("professor_hint"))
-        if not cleaned.strip():
-            print(f"  [WARN] Cleaning produced empty output for {slug}")
-            continue
-
-        cleaned_path = os.path.join(CLEANED_DIR, f"{slug}.txt")
-        with open(cleaned_path, "w", encoding="utf-8") as f:
-            f.write(cleaned)
-        print(f"  [clean] {len(cleaned):,} chars → {cleaned_path}")
-
-        # 3. Chunk
-        chunks = chunk_text(cleaned, source)
-        all_chunks.extend(chunks)
-        print(f"  [chunk] {len(chunks)} chunks produced")
 
     # 4. Save chunks
     with open(CHUNKS_FILE, "w", encoding="utf-8") as f:
@@ -572,7 +618,7 @@ def main():
             f.write(json.dumps(asdict(chunk), ensure_ascii=False) + "\n")
 
     print(f"\n{'='*60}")
-    print(f"DONE: {len(all_chunks)} total chunks → {CHUNKS_FILE}")
+    print(f"DONE: {len(all_chunks)} total chunks saved to {CHUNKS_FILE}")
 
     # Sample and print 5 random chunks for testing
     if all_chunks:

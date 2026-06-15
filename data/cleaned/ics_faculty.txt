@@ -1,19 +1,270 @@
-UCI ICS Faculty
-Professor Richard Klefstad
-Dr. Klefstad teaches ICS 46: Data Structures and is known for his rigorous approach to teaching algorithms. He has extensive experience in systems programming and compiler design.
-Research interests: Operating systems, real-time systems, embedded systems.
-Email: klefstad@uci.edu
-Professor David Kay
-Research interests: Computer science education, software engineering practices.
-Email: kay@uci.edu
-Professor Michael Goodrich
-Dr. Goodrich is a prominent researcher in computational geometry and algorithms. He teaches advanced courses in data structures. His research has significant contributions to algorithm design and analysis.
-Research interests: Computational geometry, graph algorithms, security.
-Email: goodrich@uci.edu
-Professor Thornton
-Research interests: Education, curriculum design.
-Email: thornton@uci.edu
-Professor Pattis
-Professor Pattis is known for teaching ICS 21 with emphasis on software engineering principles. He has contributed significantly to computer science education at UCI.
-Research interests: Software engineering, education.
-Email: pattis@uci.edu
+View Sangeetha Abdu Jyothi
+Sangeetha Abdu Jyothi
+Assistant Professor
+Computer Science
+sangeetha.aj@uci.edu
+View Ardalan Amiri Sani
+Ardalan Amiri Sani
+Professor and Vice Chair of Graduate Studies
+Computer Science
+ardalan@uci.edu
+View Pierre Baldi
+Distinguished Professor, Director of UCI's Institute for Genomics and Bioinformatics and AISI Director
+Computer Science
+pfbaldi@ics.uci.edu
+Associate Professor
+Computer Science
+View Elaheh (Eli) Bozorgzadeh
+Elaheh (Eli) Bozorgzadeh
+Computer Science
+eli@ics.uci.edu
+View Michael Carey
+Distinguished Professor Emeritus and Donald Bren Professor in Information and Computer Sciences
+Computer Science
+mjcarey@ics.uci.edu
+View Alfred Chen
+Assistant Professor and Lead for AS^2Guard (Autonomous & Smart Systems Guard) research group
+Computer Science
+alfchen@uci.edu
+ICS1 420 (inside ICS1 418)
+View Rina Dechter
+Distinguished Professor
+Computer Science
+dechter@ics.uci.edu
+View Brian Demsky
+Computer Science
+bdemsky@uci.edu
+View Michael Dillencourt
+Michael Dillencourt
+Computer Science
+dillenco@ics.uci.edu
+View Nikil Dutt
+Distinguished Professor and Associate Dean of Research
+Computer Science
+dutt@ics.uci.edu
+View David Eppstein
+Distinguished Professor
+Computer Science
+eppstein@ics.uci.edu
+View Habiba Farrukh
+Assistant Professor
+Computer Science
+habibaf@uci.edu
+View Charless Fowlkes
+Charless Fowlkes
+Professor and UCI Chancellor's Fellow
+Computer Science
+fowlkes@ics.uci.edu
+Assistant Professor
+Computer Science
+View Michael Franz
+Distinguished Professor and Director of UCI's Secure Systems and Software Laboratory
+Computer Science
+View Sergio Gago-Masague
+Sergio Gago-Masague
+Associate Professor of Teaching and Director of MCS
+Computer Science
+sergio.gago@uci.edu
+View Tony Givargis
+Computer Science
+givargis@uci.edu
+View Michael Goodrich
+Michael Goodrich
+Distinguished Professor
+Computer Science
+goodrich@ics.uci.edu
+View Ian Harris
+Computer Science
+harris@ics.uci.edu
+View Wayne Hayes
+Associate Professor
+Computer Science
+View Alexander Ihler
+Alexander Ihler
+Computer Science
+ihler@ics.uci.edu
+View Mohsen Imani
+Associate Professor
+Computer Science
+m.imani@uci.edu
+View Sandy Irani
+Professor and Associate Dean for Student Affairs
+Computer Science
+Dean's Office and Student Affairs, Undergraduate
+irani@ics.uci.edu
+View Unnat Jain
+Assistant Professor
+Computer Science
+View Stanislaw Jarecki
+Stanislaw Jarecki
+Computer Science
+stasio@ics.uci.edu
+View Scott Jordan
+Computer Science
+sjordan@uci.edu
+View Sang-Woo Jun
+Assistant Professor
+Computer Science
+View Ray Klefstad
+Associate Professor of Teaching
+Computer Science
+klefstad@uci.edu
+View Sven Koenig
+Chancellor’s Professor and Bren Chair
+Computer Science
+View Marco Levorato
+Computer Science
+levorato@uci.edu
+Computer Science
+chenli@ics.uci.edu
+View Aditi Majumder
+Computer Science
+majumder@ics.uci.edu
+View Stephan Mandt
+Associate Professor and HPI Co-Director
+Computer Science
+View Gopi Meenakshisundaram
+Gopi Meenakshisundaram
+Computer Science
+gopi@ics.uci.edu
+View Sharad Mehrotra
+Sharad Mehrotra
+Distinguished Professor
+Computer Science
+sharad@ics.uci.edu
+View Faisal Nawab
+Associate Professor
+Computer Science
+View Alexandru Nicolau
+Alexandru Nicolau
+Distinguished Professor
+Computer Science
+nicolau@ics.uci.edu
+View Ioannis Panageas
+Ioannis Panageas
+Assistant Professor
+Computer Science
+ipanagea@ics.uci.edu
+View Marios Papaefthymiou
+Marios Papaefthymiou
+Professor and Ted and Janice Smith Family Foundation Dean
+Computer Science
+View Michael Shindler
+Michael Shindler
+Associate Professor of Teaching
+Computer Science
+View Sameer Singh
+Computer Science
+View Padhraic Smyth
+Distinguished Professor, Director of UCI's Data Science Initiative and Vice Chair of Computing and HPI Co-Director
+Computer Science
+smyth@ics.uci.edu
+View Erik Sudderth
+Professor and HPI Director
+Computer Science
+sudderth@uci.edu
+View Gene Tsudik
+Distinguished Professor and NetSys Co-Director
+Computer Science
+gts@ics.uci.edu
+View Vijay Vazirani
+Distinguished Professor and Director, ACO Center (Algorithms, Combinatorics and Optimization)
+Computer Science
+vazirani@ics.uci.edu
+View Alexander Veidenbaum
+Alexander Veidenbaum
+Computer Science
+alexv@ics.uci.edu
+View Nalini Venkatasubramanian
+Nalini Venkatasubramanian
+Computer Science
+nalini@ics.uci.edu
+View Jennifer Wong-Ma
+Jennifer Wong-Ma
+Professor of Teaching and Vice Chair of Undergraduate Studies
+Computer Science
+jennifer.wongma@uci.edu
+View Xiaohui Xie
+Computer Science
+xhx@ics.uci.edu
+View Thomas Yeh
+Assistant Professor of Teaching
+Computer Science
+thomas.yeh@uci.edu
+View Jing Zhang
+Associate Professor
+Computer Science
+zhang.jing@uci.edu
+View Shuang Zhao
+Associate Professor
+Computer Science
+shz@ics.uci.edu
+View Shannon Alfaro
+Senior Continuing Lecturer
+Computer Science
+View Irene Gassko
+Continuing Lecturer
+Computer Science
+igassko@uci.edu
+View James Herold
+Computer Science
+jherold2@uci.edu
+View Kalev Kask
+Continuing Lecturer and Associate Project Scientist
+Computer Science
+View David Ochi
+Lecturer and Academic Coordinator
+Computer Science
+View Alex Thornton
+Senior Continuing Lecturer
+Computer Science
+thornton@ics.uci.edu
+View Lubomir Bic
+Professor Emeritus
+Computer Science
+bic@ics.uci.edu
+View Magda El Zarki
+Professor Emerita
+Computer Science
+elzarki@uci.edu
+View Daniel Hirschberg
+Daniel Hirschberg
+Professor Emeritus
+Computer Science
+dan@ics.uci.edu
+View Ramesh Jain
+Distinguished Professor Emeritus
+Computer Science
+jain@ics.uci.edu
+Professor Emeritus of Teaching
+Computer Science and Informatics
+View Milena Mihail
+Professor Emerita
+Computer Science
+View Eric Mjolsness
+Professor Emeritus
+Computer Science
+View Isaac Scherson
+Professor Emeritus
+Computer Science
+isaac@ics.uci.edu
+View Kareem Ahmed
+Postdoctoral Scholar
+Computer Science
+ahmedky@uci.edu
+View Francesco Antognazza
+Francesco Antognazza
+Postdoctoral Scholar
+Computer Science
+fantogna@uci.edu
+View Davide Corsi
+Postdoctoral Scholar
+Computer Science
+View Felix Draxler
+Postdoctoral Scholar
+Computer Science
+fdraxler@uci.edu
+View Alexander Gottuso
+Alexander Gottuso
+Computer Science
+gottusoa@uci.edu

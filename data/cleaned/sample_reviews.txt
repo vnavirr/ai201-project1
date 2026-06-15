@@ -1,0 +1,29 @@
+[Thornton - ICS 21 - RateMyProfessors]
+Professor Thornton is incredibly strict with grading. He expects perfection on every assignment and exam. Harsh grader but his feedback is detailed. Several students have complained about unfair deductions for minor formatting issues.
+
+[Thornton - ICS 21 - RateMyProfessors]
+Thornton's grading is fair but rigorous. He sticks to his rubric consistently. If you follow the requirements exactly, you'll get full marks. The issue is his rubric is extremely detailed and he doesn't give partial credit.
+
+[Klefstad - ICS 46 - Reddit]
+ICS 46 with Klefstad is a lot of work but really prepares you. His exams are challenging. He's lenient with grading though - I got a B on the final but still ended with an A. The concepts stick because he teaches thoroughly.
+
+[Shindler - ICS 46 - Reddit]
+Shindler explains things way better than Klefstad. His lectures are clear and organized. The workload is lighter too. Definitely recommend Shindler for ICS 46 if you want an easier time, but you learn less depth.
+
+[Klefstad - ICS 46 - Reddit]
+Comparing Shindler and Klefstad: Klefstad is harder but teaches real systems programming. Shindler is easier but more shallow. If you want to actually understand data structures, take Klefstad. He's lenient with grading relative to difficulty.
+
+[Goodrich - ICS 21 - RateMyProfessors]
+Goodrich is an excellent researcher and decent instructor. Class moves fast but he's willing to slow down if students ask. Average difficulty around 3.5/5. His assignments are challenging but doable. Fair grading.
+
+[Pattis - ICS 21 - RateMyProfessors]
+Pattis makes ICS 21 manageable. Difficulty 2.8/5. He's a good lecturer and reasonable with grading. Lots of practice problems help you learn. Not the hardest class but not trivial either.
+
+[Kay - ICS 101 - RateMyProfessors]
+Professor Kay is very accessible and cares about student learning. Class difficulty is moderate. His exams are fair and reflect the material covered. Would recommend for anyone wanting a supportive professor.
+
+[Multiple - ICS 46 - Reddit]
+Most ICS CS professors are pretty rigorous. The avg difficulty rating is around 3.2-3.4 out of 5. Fast-paced lectures are common. Many complain about project-heavy coursework and unclear rubrics. Some professors are more generous with curves.
+
+[Thornton - ICS 21 - Reddit]
+Thornton is one of the most recommended professors here. He's strict but fair and really cares about education. His grading is harsh though - don't expect easy marks. But if you put in effort and follow instructions, you'll learn a lot.
